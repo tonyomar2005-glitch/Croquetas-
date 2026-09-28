@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cuadre de Croquetas</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1d5c63">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#f3f1ec;--card:#fff;--ink:#1f2a2e;--muted:#66727a;--line:#d9dcdd;--main:#1d5c63;--gold:#b9770e;--ok:#1e7b3a;--bad:#c0392b;--soft:#e6f0f1;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12191b;--card:#1b2427;--ink:#e8eeef;--muted:#95a3a9;--line:#33414530;--line:#334145;--main:#5fb3bb;--gold:#e0a04a;--ok:#5cc47d;--bad:#ff7b6b;--soft:#22343a}}
+:root[data-theme="dark"]{--bg:#12191b;--card:#1b2427;--ink:#e8eeef;--muted:#95a3a9;--line:#334145;--main:#5fb3bb;--gold:#e0a04a;--ok:#5cc47d;--bad:#ff7b6b;--soft:#22343a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:14px;line-height:1.4}
+.wrap{max-width:520px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:16px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:20px 0 10px}
+.sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px}
+input{width:100%;padding:10px;font-size:16px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+input:focus-visible,button:focus-visible{outline:2px solid var(--main);outline-offset:2px}
+.row{display:flex;gap:10px;margin-bottom:12px}.row>div{flex:1;min-width:0}
+.ing{font-weight:600;font-size:14px;margin:0 0 4px}
+button{font:inherit;font-weight:700;border:0;border-radius:6px;padding:12px;cursor:pointer;color:#fff;background:var(--main);width:100%}
+button.sec{background:transparent;color:var(--main);border:1px solid var(--main)}
+button.del{background:var(--bad);width:auto;padding:6px 10px;font-size:13px}
+button.small{width:auto;padding:6px 10px;font-size:13px}
+.res{background:var(--soft);border-radius:8px;padding:14px;margin-top:16px}
+.res p{display:flex;justify-content:space-between;margin:4px 0}
+.res .net{border-top:1px solid var(--line);margin-top:8px;padding-top:8px;font-size:18px;font-weight:700}
+.pos{color:var(--ok)}.neg{color:var(--bad)}
+.msg{font-size:14px;margin:10px 0 0;min-height:20px}.msg.err{color:var(--bad)}.msg.ok{color:var(--ok)}
+.item{border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:6px;padding:12px;margin-bottom:10px}
+.item .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.item b{font-size:16px}.item small{color:var(--muted)}
+.item p{margin:3px 0;font-size:14px}
+.acts{display:flex;gap:8px;margin-top:8px}
+.tools{display:flex;gap:8px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="card">
+  <h1 id="titulo">Nuevo cuadre</h1>
+  <p class="sub">Anota la producción y los gastos del día.</p>
+
+  <label for="nombre">Nombre del cuadre (ej. Lunes 15)</label>
+  <input id="nombre" type="text" maxlength="60" style="margin-bottom:12px">
+
+  <div class="row">
+    <div><label for="masas">Masas elaboradas</label><input id="masas" type="number" min="0" step="any" inputmode="decimal"></div>
+    <div><label for="paquetes">Paquetes dados</label><input id="paquetes" type="number" min="0" step="any" inputmode="decimal"></div>
+  </div>
+  <div class="row">
+    <div><label for="precio">Precio por paquete ($)</label><input id="precio" type="number" min="0" step="any" inputmode="decimal" value="200"></div>
+  </div>
+
+  <h2>Materias primas</h2>
+  <div id="ingredientes"></div>
+
+  <button id="btnCalc" type="button">Calcular</button>
+  <div id="res" class="res" hidden>
+    <p><span>Facturación</span><span id="rFact"></span></p>
+    <p><span>Inversión</span><span id="rInv"></span></p>
+    <p><span>Costo por paquete</span><span id="rCpp"></span></p>
+    <p><span>Margen</span><span id="rMar"></span></p>
+    <p class="net"><span>Ganancia neta</span><span id="rGan"></span></p>
+  </div>
+  <div class="row" style="margin-top:12px">
+    <div><button id="btnGuardar" type="button" style="background:var(--ok)">Guardar cuadre</button></div>
+    <div id="cancelWrap" hidden><button id="btnCancelar" type="button" class="sec">Cancelar edición</button></div>
+  </div>
+  <p id="msg" class="msg" role="status"></p>
+</div>
+
+<div class="card">
+  <h1 style="font-size:19px">Historial</h1>
+  <div class="tools">
+    <button id="btnExp" type="button" class="sec small">Exportar</button>
+    <button id="btnImp" type="button" class="sec small">Importar</button>
+    <input id="fileImp" type="file" accept="application/json,.json" hidden>
+  </div>
+  <div id="lista"></div>
+</div>
+</div>
+
+<script>
+const KEY='cuadresCroquetas';
+// tipo 'qp' = cantidad x precio; 'total' = solo costo total
+const ING=[
+ {k:'harina',n:'Harina',u:'Lbs',p:'Precio por lb ($)',t:'qp'},
+ {k:'pintar',n:'Sazones de pintar',u:'Cantidad',p:'Precio c/u ($)',t:'qp'},
+ {k:'pollo',n:'Sazones de pollo',u:'Cantidad',p:'Precio c/u ($)',t:'qp'},
+ {k:'completo',n:'Sazones completo',u:'Cantidad',p:'Precio c/u ($)',t:'qp'},
+ {k:'nuez',n:'Nuez moscada',u:'Cantidad',p:'Precio c/u ($)',t:'qp'},
+ {k:'picadillo',n:'Picadillo',u:'Lbs',p:'Precio por lb ($)',t:'qp'},
+ {k:'tostadas',n:'Tostadas',p:'Costo total ($)',t:'total'},
+ {k:'naylon',n:'Naylon',p:'Costo total ($)',t:'total'}
+];
+const $=id=>document.getElementById(id);
+const num=id=>{const v=parseFloat($(id).value);return isNaN(v)?0:v};
+const money=n=>'$'+n.toFixed(2);
+let editId=null;
+
+function store(){try{const d=JSON.parse(localStorage.getItem(KEY));return Array.isArray(d)?d:[]}catch(e){return []}}
+function save(d){try{localStorage.setItem(KEY,JSON.stringify(d));return true}catch(e){return false}}
+function say(t,cls){const m=$('msg');m.textContent=t;m.className='msg '+(cls||'')}
+
+// Construir campos
+const box=$('ingredientes');
+ING.forEach(i=>{
+  const w=document.createElement('div');
+  const h=document.createElement('p');h.className='ing';h.textContent=i.n;w.appendChild(h);
+  const r=document.createElement('div');r.className='row';
+  const cols=i.t==='qp'?[['q_',i.u],['c_',i.p]]:[['c_',i.p]];
+  cols.forEach(([pre,lab])=>{
+    const c=document.createElement('div');
+    const l=document.createElement('label');l.htmlFor=pre+i.k;l.textContent=lab;
+    const inp=document.createElement('input');inp.type='number';inp.id=pre+i.k;inp.min='0';inp.step='any';inp.setAttribute('inputmode','decimal');
+    c.append(l,inp);r.appendChild(c);
+  });
+  w.appendChild(r);box.appendChild(w);
+});
+
+// Cualquier cambio oculta resultados viejos
+document.querySelectorAll('input:not(#nombre):not(#fileImp)').forEach(e=>e.addEventListener('input',()=>{$('res').hidden=true}));
+
+function leer(){
+  const ing={};
+  ING.forEach(i=>{ing[i.k]=i.t==='qp'?{q:num('q_'+i.k),c:num('c_'+i.k)}:{c:num('c_'+i.k)}});
+  return {masas:num('masas'),paquetes:num('paquetes'),precio:num('precio'),ing};
+}
+function totales(d){
+  const inv=ING.reduce((s,i)=>{const x=d.ing[i.k];return s+(i.t==='qp'?x.q*x.c:x.c)},0);
+  const fact=d.paquetes*d.precio;
+  return {fact,inv,gan:fact-inv,cpp:d.paquetes>0?inv/d.paquetes:0,mar:fact>0?(fact-inv)/fact*100:0};
+}
+function validar(){
+  const ids=[...document.querySelectorAll('#ingredientes input,#masas,#paquetes,#precio')];
+  if(ids.some(e=>parseFloat(e.value)<0)){say('Hay valores negativos. Corrígelos para continuar.','err');return false}
+  if(num('paquetes')<=0){say('Anota al menos un paquete dado.','err');return false}
+  if(num('precio')<=0){say('El precio por paquete debe ser mayor que 0.','err');return false}
+  return true;
+}
+function calcular(){
+  if(!validar())return null;
+  const d=leer(),t=totales(d);
+  $('rFact').textContent=money(t.fact);$('rInv').textContent=money(t.inv);
+  $('rCpp').textContent=money(t.cpp);$('rMar').textContent=t.mar.toFixed(1)+'%';
+  const g=$('rGan');g.textContent=money(t.gan);g.className=t.gan>=0?'pos':'neg';
+  $('res').hidden=false;say('');
+  return {d,t};
+}
+$('btnCalc').onclick=calcular;
+
+$('btnGuardar').onclick=()=>{
+  const nombre=$('nombre').value.trim();
+  if(!nombre){say('Escribe un nombre para el cuadre antes de guardar.','err');return}
+  const r=calcular();if(!r)return; // siempre recalcula antes de guardar
+  const reg={id:editId||Date.now(),nombre,fecha:new Date().toISOString(),...r.d,...r.t};
+  let h=store();
+  if(editId){h=h.map(x=>x.id===editId?{...reg,fecha:x.fecha}:x)}else{h.unshift(reg)}
+  if(!save(h)){say('No se pudo guardar: el navegador bloquea el almacenamiento. Usa Exportar para no perder datos.','err');return}
+  const era=editId;limpiar();say(era?'Cuadre actualizado.':'Cuadre guardado.','ok');pintar();
+};
+function limpiar(){
+  document.querySelectorAll('input:not(#precio):not(#fileImp)').forEach(e=>e.value='');
+  $('res').hidden=true;editId=null;$('titulo').textContent='Nuevo cuadre';$('cancelWrap').hidden=true;
+  $('btnGuardar').textContent='Guardar cuadre';
+}
+$('btnCancelar').onclick=()=>{limpiar();say('')};
+
+function editar(id){
+  const x=store().find(i=>i.id===id);if(!x)return;
+  if(!x.ing){say('Este cuadre antiguo solo tiene totales y no se puede editar.','err');return}
+  limpiar();editId=id;
+  $('nombre').value=x.nombre;$('masas').value=x.masas;$('paquetes').value=x.paquetes;$('precio').value=x.precio;
+  ING.forEach(i=>{const v=x.ing[i.k];if(!v)return;if(i.t==='qp'){$('q_'+i.k).value=v.q||'';$('c_'+i.k).value=v.c||''}else $('c_'+i.k).value=v.c||''});
+  $('titulo').textContent='Editando cuadre';$('cancelWrap').hidden=false;$('btnGuardar').textContent='Guardar cambios';
+  say('');window.scrollTo({top:0,behavior:'smooth'});
+}
+function borrar(id){
+  if(!confirm('¿Eliminar este cuadre? No se puede deshacer.'))return;
+  save(store().filter(i=>i.id!==id));if(editId===id)limpiar();pintar();
+}
+function fechaTxt(f){const d=new Date(f);return isNaN(d)?String(f):d.toLocaleString()}
+
+function pintar(){
+  const h=store(),c=$('lista');c.textContent='';
+  if(!h.length){const p=document.createElement('p');p.className='sub';p.textContent='Aún no hay cuadres. Calcula uno y pulsa Guardar.';c.appendChild(p);return}
+  h.forEach(x=>{
+    const it=document.createElement('div');it.className='item';
+    const top=document.createElement('div');top.className='top';
+    const tt=document.createElement('div');
+    const b=document.createElement('b');b.textContent=x.nombre; // textContent evita XSS
+    const br=document.createElement('br');
+    const s=document.createElement('small');s.textContent=fechaTxt(x.fecha);
+    tt.append(b,br,s);top.appendChild(tt);it.appendChild(top);
+    const g=Number(x.ganancia??x.gan)||0;
+    const lineas=[
+      ['Producción: '+x.masas+' masas / '+x.paquetes+' paquetes'],
+      ['Facturación: '+money(Number(x.facturacion??x.fact)||0)],
+      ['Inversión: '+money(Number(x.inversion??x.inv)||0)]
+    ];
+    lineas.forEach(([t])=>{const p=document.createElement('p');p.textContent=t;it.appendChild(p)});
+    const pg=document.createElement('p');pg.textContent='Ganancia: '+money(g)+(x.mar!=null?' ('+Number(x.mar).toFixed(1)+'%)':'');
+    pg.className=g>=0?'pos':'neg';pg.style.fontWeight='700';it.appendChild(pg);
+    const a=document.createElement('div');a.className='acts';
+    const e=document.createElement('button');e.type='button';e.className='sec small';e.textContent='Editar';e.onclick=()=>editar(x.id);
+    const d=document.createElement('button');d.type='button';d.className='del';d.textContent='Eliminar';d.onclick=()=>borrar(x.id);
+    a.append(e,d);it.appendChild(a);c.appendChild(it);
+  });
+}
+
+// Exportar / importar
+$('btnExp').onclick=()=>{
+  const h=store();if(!h.length){say('No hay cuadres para exportar.','err');return}
+  const blob=new Blob([JSON.stringify(h,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='cuadres-croquetas-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();a.remove();
+  say('Si no se descargó el archivo, abre esta página en tu navegador fuera de la app.');
+};
+$('btnImp').onclick=()=>$('fileImp').click();
+$('fileImp').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const nuevos=JSON.parse(r.result);
+      if(!Array.isArray(nuevos)||nuevos.some(x=>!x||typeof x.nombre!=='string'||x.id==null))throw 0;
+      const h=store(),ids=new Set(h.map(x=>x.id));
+      const add=nuevos.filter(x=>!ids.has(x.id));
+      if(!save([...h,...add].sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)))))throw 1;
+      pintar();say('Importados '+add.length+' cuadres nuevos.','ok');
+    }catch(err){say('El archivo no es un respaldo válido.','err')}
+    $('fileImp').value='';
+  };
+  r.readAsText(f);
+};
+
+pintar();
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+</script>
+</body>
+</html>
